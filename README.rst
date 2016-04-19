@@ -2,4 +2,4 @@
 
 How to run
 ==========
-sudo /var/www/test123/bin/gunicorn -b :80 myapp.run:app
+sudo /var/www/<virtual env>/bin/gunicorn -b :80 myapp.run:app
