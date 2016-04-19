@@ -4,7 +4,7 @@ from myapp.subunitdb.client import SubunitClient
 
 
 client = SubunitClient("mysql://root:q1w2e3r4@127.0.0.1/subunit")
-calls = [tests.Tests, tests.Test, runs.Runs, runs.Run]
+calls = [runs.TestsByRunID, tests.Tests, tests.Test, runs.Runs, runs.Run]
 
 
 def handle_404(req, resp):
