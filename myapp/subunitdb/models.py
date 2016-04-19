@@ -28,7 +28,8 @@ class ListModel(list):
 
 class RunModel(BaseModel):
     def __init__(
-            self, id=None, skips=None, fails=None, passes=None, run_at=None):
+        self, id=None, skips=None, fails=None, passes=None, run_at=None,
+            metadata=None):
         super(RunModel, self).__init__(locals())
 
     def to_dict(self):
@@ -37,12 +38,15 @@ class RunModel(BaseModel):
         except:
             time = str(self.run_at)
 
-        return {
+        dic = {
             "id": self.id,
             "skips": self.skips,
             "fails": self.fails,
             "passes": self.passes,
             "run_at": time}
+        if self.metadata is not None:
+            dic["metadata"] = self.metadata
+        return dic
 
     @classmethod
     def from_sqlalchemy(cls, obj):
@@ -58,7 +62,7 @@ class TestModel(BaseModel):
     def __init__(
         self, id=None, test_id=None, run_id=None, status=None, start_time=None,
         stop_time=None, start_time_microsecond=None,
-            stop_time_microsecond=None):
+            stop_time_microsecond=None, metadata=None):
         super(TestModel, self).__init__(locals())
 
     def to_dict(self):
@@ -72,7 +76,7 @@ class TestModel(BaseModel):
         except:
             stop = str(self.stop_time)
 
-        return {
+        dic = {
             "id": self.id,
             "test_id": self.test_id,
             "run_id": self.run_id,
@@ -81,6 +85,9 @@ class TestModel(BaseModel):
             "stop_time": stop,
             "start_time_microsecond": self.start_time_microsecond,
             "stop_time_microsecond": self.stop_time_microsecond}
+        if self.metadata is not None:
+            dic["metadata"] = self.metadata
+        return dic
 
     @classmethod
     def from_sqlalchemy(cls, obj):
