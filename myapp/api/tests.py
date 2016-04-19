@@ -14,7 +14,7 @@ class Tests(object):
 
 
 class Test(object):
-    route = "/test/{id}"
+    route = "/tests/{id}"
 
     def __init__(self, client):
         self.client = client

@@ -83,3 +83,8 @@ class SubunitClient(object):
                 obj.key: obj.value for obj in sub_query.all()})
             return model
         return None
+
+    def get_tests_by_run_id(self, run_id):
+        main_query = self.session.query(self.test_runs).filter_by(
+            run_id=run_id)
+        return ListModel.from_sqlalchemy(main_query.all(), TestModel)

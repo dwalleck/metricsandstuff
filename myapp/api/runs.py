@@ -14,7 +14,7 @@ class Runs(object):
 
 
 class Run(object):
-    route = "/run/{id}"
+    route = "/runs/{id}"
 
     def __init__(self, client):
         self.client = client
@@ -25,6 +25,24 @@ class Run(object):
         if run is not None:
             resp.status = falcon.HTTP_200
             resp.data = run.to_json()
+        else:
+            raise falcon.HTTPNotFound(
+                description="The requested resource does not exist",
+                code=falcon.HTTP_404)
+
+
+class TestsByRunID(object):
+    route = "/runs/{id}/tests"
+
+    def __init__(self, client):
+        self.client = client
+
+    def on_get(self, req, resp, id):
+        test = self.client.get_tests_by_run_id(id)
+        resp.content_type = 'application/json'
+        if test is not None:
+            resp.status = falcon.HTTP_200
+            resp.data = test.to_json()
         else:
             raise falcon.HTTPNotFound(
                 description="The requested resource does not exist",
