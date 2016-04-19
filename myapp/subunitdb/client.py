@@ -10,9 +10,8 @@ class SubunitClient(object):
 
     def __init__(self, connection_string):
         Base = automap_base()
-        engine = create_engine(connection_string)
-        Base.prepare(engine, reflect=True)
-        self.session = Session(engine)
+        self.engine = create_engine(connection_string)
+        Base.prepare(self.engine, reflect=True)
         # self.alembic_version = Base.classes.alembic_version
         self.attachments = Base.classes.attachments
         self.run_metadata = Base.classes.run_metadata
@@ -23,10 +22,11 @@ class SubunitClient(object):
         self.tests = Base.classes.tests
 
     def get_runs(self, run_after=None, run_before=None, limit=100, **metadata):
-        main_query = self.session.query(self.runs)
+        session = Session(self.engine)
+        main_query = session.query(self.runs)
         if metadata:
             for k, v in metadata.items():
-                sub_query = self.session.query(self.run_metadata.run_id)
+                sub_query = session.query(self.run_metadata.run_id)
                 main_query = main_query.filter(self.runs.id.in_(
                     sub_query.filter_by(key=str(k), value=str(v))))
 
@@ -40,11 +40,12 @@ class SubunitClient(object):
         return ListModel.from_sqlalchemy(main_query.all(), RunModel)
 
     def get_run_by_id(self, id_):
-        main_query = self.session.query(self.runs)
+        session = Session(self.engine)
+        main_query = session.query(self.runs)
         main_query = main_query.filter(self.runs.id == id_)
         for result in main_query.all():
             model = RunModel.from_sqlalchemy(result)
-            sub_query = self.session.query(self.run_metadata)
+            sub_query = session.query(self.run_metadata)
             sub_query = sub_query.filter_by(run_id=id_)
             setattr(model, "metadata", {
                 obj.key: obj.value for obj in sub_query.all()})
@@ -53,10 +54,11 @@ class SubunitClient(object):
 
     def get_tests(
             self, run_after=None, run_before=None, limit=100, **metadata):
-        main_query = self.session.query(self.test_runs)
+        session = Session(self.engine)
+        main_query = session.query(self.test_runs)
         if metadata:
             for k, v in metadata.items():
-                sub_query = self.session.query(
+                sub_query = session.query(
                     self.test_run_metadata.test_run_id)
                 main_query = main_query.filter(self.test_runs.id.in_(
                     sub_query.filter_by(key=str(k), value=str(v))))
@@ -73,11 +75,12 @@ class SubunitClient(object):
         return ListModel.from_sqlalchemy(main_query.all(), TestModel)
 
     def get_test_by_id(self, id_):
-        main_query = self.session.query(self.test_runs)
+        session = Session(self.engine)
+        main_query = session.query(self.test_runs)
         main_query = main_query.filter(self.test_runs.id == id_)
         for result in main_query.all():
             model = TestModel.from_sqlalchemy(result)
-            sub_query = self.session.query(self.test_run_metadata)
+            sub_query = session.query(self.test_run_metadata)
             sub_query = sub_query.filter_by(test_run_id=id_)
             setattr(model, "metadata", {
                 obj.key: obj.value for obj in sub_query.all()})
@@ -85,6 +88,7 @@ class SubunitClient(object):
         return None
 
     def get_tests_by_run_id(self, run_id):
-        main_query = self.session.query(self.test_runs).filter_by(
+        session = Session(self.engine)
+        main_query = session.query(self.test_runs).filter_by(
             run_id=run_id)
         return ListModel.from_sqlalchemy(main_query.all(), TestModel)
