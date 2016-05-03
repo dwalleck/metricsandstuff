@@ -62,7 +62,7 @@ class TestModel(BaseModel):
     def __init__(
         self, id=None, test_id=None, run_id=None, status=None, start_time=None,
         stop_time=None, start_time_microsecond=None,
-            stop_time_microsecond=None, metadata=None):
+            stop_time_microsecond=None, metadata=None, test_name=None):
         super(TestModel, self).__init__(locals())
 
     def to_dict(self):
@@ -84,7 +84,8 @@ class TestModel(BaseModel):
             "start_time": start,
             "stop_time": stop,
             "start_time_microsecond": self.start_time_microsecond,
-            "stop_time_microsecond": self.stop_time_microsecond}
+            "stop_time_microsecond": self.stop_time_microsecond,
+            "test_name": self.test_name}
         if self.metadata is not None:
             dic["metadata"] = self.metadata
         return dic
@@ -99,4 +100,5 @@ class TestModel(BaseModel):
             start_time=obj.start_time,
             stop_time=obj.stop_time,
             start_time_microsecond=obj.start_time_microsecond,
-            stop_time_microsecond=obj.stop_time_microsecond)
+            stop_time_microsecond=obj.stop_time_microsecond,
+            test_name=obj.test_name)

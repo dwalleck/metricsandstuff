@@ -21,7 +21,9 @@ class SubunitClient(object):
         self.test_runs = Base.classes.test_runs
         self.tests = Base.classes.tests
 
-    def get_runs(self, run_after=None, run_before=None, limit=100, **metadata):
+    def get_runs(
+            self, run_after=None, run_before=None,
+            limit=100, page=1, **metadata):
         session = Session(self.engine)
         main_query = session.query(self.runs)
         if metadata:
@@ -36,7 +38,7 @@ class SubunitClient(object):
         if run_before is not None:
             main_query = main_query.filter(self.runs.run_at < run_before)
 
-        main_query = main_query.limit(limit)
+        main_query = main_query.limit(limit).offset(limit*(page-1))
         return ListModel.from_sqlalchemy(main_query.all(), RunModel)
 
     def get_run_by_id(self, id_):
@@ -53,7 +55,8 @@ class SubunitClient(object):
         return None
 
     def get_tests(
-            self, run_after=None, run_before=None, limit=100, **metadata):
+            self, run_after=None, run_before=None,
+            limit=100, page=1, **metadata):
         session = Session(self.engine)
         main_query = session.query(self.test_runs)
         if metadata:
@@ -71,8 +74,13 @@ class SubunitClient(object):
             main_query = main_query.filter(
                 self.test_runs.start_time < run_before)
 
-        main_query = main_query.limit(limit)
-        return ListModel.from_sqlalchemy(main_query.all(), TestModel)
+        main_query = main_query.limit(limit).offset(limit*(page-1))
+        results = []
+        for result in main_query.all():
+            sub_query = session.query(self.tests).filter_by(id=result.test_id)
+            setattr(result, "test_name", sub_query.one().test_id)
+            results.append(result)
+        return ListModel.from_sqlalchemy(results, TestModel)
 
     def get_test_by_id(self, id_):
         session = Session(self.engine)
@@ -84,6 +92,8 @@ class SubunitClient(object):
             sub_query = sub_query.filter_by(test_run_id=id_)
             setattr(model, "metadata", {
                 obj.key: obj.value for obj in sub_query.all()})
+            sub_query = session.query(self.tests).filter_by(id=result.test_id)
+            setattr(model, "test_name", sub_query.one().test_id)
             return model
         return None
 
@@ -91,4 +101,9 @@ class SubunitClient(object):
         session = Session(self.engine)
         main_query = session.query(self.test_runs).filter_by(
             run_id=run_id)
-        return ListModel.from_sqlalchemy(main_query.all(), TestModel)
+        results = []
+        for result in main_query.all():
+            sub_query = session.query(self.tests).filter_by(id=result.test_id)
+            setattr(result, "test_name", sub_query.one().test_id)
+            results.append(result)
+        return ListModel.from_sqlalchemy(results, TestModel)
