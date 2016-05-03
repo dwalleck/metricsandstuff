@@ -24,6 +24,11 @@ class SubunitClient(object):
     def get_runs(
             self, run_after=None, run_before=None,
             limit=100, page=1, **metadata):
+        if type(limit) != int:
+            limit = int(limit)
+        if type(page) != int:
+            page = int(page)
+
         session = Session(self.engine)
         main_query = session.query(self.runs)
         if metadata:
@@ -57,6 +62,11 @@ class SubunitClient(object):
     def get_tests(
             self, run_after=None, run_before=None,
             limit=100, page=1, **metadata):
+        if type(limit) != int:
+            limit = int(limit)
+        if type(page) != int:
+            page = int(page)
+
         session = Session(self.engine)
         main_query = session.query(self.test_runs)
         if metadata:
