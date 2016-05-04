@@ -1,25 +1,21 @@
-from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 
-from myapp.subunitdb.models import ListModel, RunModel, TestModel
+from myapp.subunitdb import models
 
 
 class SubunitClient(object):
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, connection_string):
-        Base = automap_base()
         self.engine = create_engine(connection_string)
-        Base.prepare(self.engine, reflect=True)
-        # self.alembic_version = Base.classes.alembic_version
-        self.attachments = Base.classes.attachments
-        self.run_metadata = Base.classes.run_metadata
-        self.runs = Base.classes.runs
-        self.test_metadata = Base.classes.test_metadata
-        self.test_run_metadata = Base.classes.test_run_metadata
-        self.test_runs = Base.classes.test_runs
-        self.tests = Base.classes.tests
+        self.attachments = models.Attachments
+        self.run_metadata = models.RunMetadata
+        self.runs = models.Run
+        self.test_metadata = models.TestMetadata
+        self.test_run_metadata = models.TestRunMetadata
+        self.test_runs = models.TestRun
+        self.tests = models.Test
 
     def get_runs(
             self, run_after=None, run_before=None,
@@ -44,18 +40,15 @@ class SubunitClient(object):
             main_query = main_query.filter(self.runs.run_at < run_before)
 
         main_query = main_query.limit(limit).offset(limit*(page-1))
-        return ListModel.from_sqlalchemy(main_query.all(), RunModel)
+        return models.ListModel.from_sqlalchemy(
+            main_query.all(), models.RunModel)
 
     def get_run_by_id(self, id_):
         session = Session(self.engine)
         main_query = session.query(self.runs)
         main_query = main_query.filter(self.runs.id == id_)
         for result in main_query.all():
-            model = RunModel.from_sqlalchemy(result)
-            sub_query = session.query(self.run_metadata)
-            sub_query = sub_query.filter_by(run_id=id_)
-            setattr(model, "metadata", {
-                obj.key: obj.value for obj in sub_query.all()})
+            model = models.RunModel.from_sqlalchemy(result)
             return model
         return None
 
@@ -85,25 +78,15 @@ class SubunitClient(object):
                 self.test_runs.start_time < run_before)
 
         main_query = main_query.limit(limit).offset(limit*(page-1))
-        results = []
-        for result in main_query.all():
-            sub_query = session.query(self.tests).filter_by(id=result.test_id)
-            setattr(result, "test_name", sub_query.one().test_id)
-            results.append(result)
-        return ListModel.from_sqlalchemy(results, TestModel)
+        return models.ListModel.from_sqlalchemy(
+            main_query.all(), models.TestModel)
 
     def get_test_by_id(self, id_):
         session = Session(self.engine)
-        main_query = session.query(self.test_runs)
-        main_query = main_query.filter(self.test_runs.id == id_)
+        main_query = session.query(self.test_runs).filter(
+            self.test_runs.id == id_)
         for result in main_query.all():
-            model = TestModel.from_sqlalchemy(result)
-            sub_query = session.query(self.test_run_metadata)
-            sub_query = sub_query.filter_by(test_run_id=id_)
-            setattr(model, "metadata", {
-                obj.key: obj.value for obj in sub_query.all()})
-            sub_query = session.query(self.tests).filter_by(id=result.test_id)
-            setattr(model, "test_name", sub_query.one().test_id)
+            model = models.TestModel.from_sqlalchemy(result)
             return model
         return None
 
@@ -111,9 +94,5 @@ class SubunitClient(object):
         session = Session(self.engine)
         main_query = session.query(self.test_runs).filter_by(
             run_id=run_id)
-        results = []
-        for result in main_query.all():
-            sub_query = session.query(self.tests).filter_by(id=result.test_id)
-            setattr(result, "test_name", sub_query.one().test_id)
-            results.append(result)
-        return ListModel.from_sqlalchemy(results, TestModel)
+        return models.ListModel.from_sqlalchemy(
+            main_query.all(), models.TestModel)
