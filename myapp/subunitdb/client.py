@@ -10,10 +10,7 @@ class SubunitClient(object):
     def __init__(self, connection_string):
         self.engine = create_engine(connection_string)
         self.attachments = models.Attachments
-        self.run_metadata = models.RunMetadata
         self.runs = models.Run
-        self.test_metadata = models.TestMetadata
-        self.test_run_metadata = models.TestRunMetadata
         self.test_runs = models.TestRun
         self.tests = models.Test
 
@@ -29,9 +26,7 @@ class SubunitClient(object):
         main_query = session.query(self.runs)
         if metadata:
             for k, v in metadata.items():
-                sub_query = session.query(self.run_metadata.run_id)
-                main_query = main_query.filter(self.runs.id.in_(
-                    sub_query.filter_by(key=str(k), value=str(v))))
+                main_query = main_query.filter(self.runs.my_metadata[k] == v)
 
         if run_after is not None:
             main_query = main_query.filter(self.runs.run_at > run_after)
@@ -64,10 +59,8 @@ class SubunitClient(object):
         main_query = session.query(self.test_runs)
         if metadata:
             for k, v in metadata.items():
-                sub_query = session.query(
-                    self.test_run_metadata.test_run_id)
-                main_query = main_query.filter(self.test_runs.id.in_(
-                    sub_query.filter_by(key=str(k), value=str(v))))
+                main_query = main_query.filter(
+                    self.test_runs.my_metadata[k] == v)
 
         if run_after is not None:
             main_query = main_query.filter(
